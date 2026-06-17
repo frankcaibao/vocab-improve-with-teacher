@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>英语词汇陪练 - 学生端</title>
+<style>
+:root {
+  --primary: #6366f1;
+  --accent: #8b5cf6;
+  --gray-100: #f3f4f6;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-700: #374151;
+  --gray-900: #111827;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: white;
+  color: var(--gray-900);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  transition: background .3s, color .3s;
+}
+body.dark {
+  background: #0f172a;
+  color: #f1f5f9;
+}
+body.dark .ai-display { background: #1e293b; color: #e2e8f0; }
+body.dark .status-bar { color: #94a3b8; }
+body.dark .theme-btn { color: #94a3b8; border-color: #334155; }
+body.dark .theme-btn:hover { background: #1e293b; }
+
+.container {
+  text-align: center;
+  max-width: 800px;
+  width: 100%;
+}
+.word-main {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 8rem;
+  font-weight: 700;
+  letter-spacing: -2px;
+  margin-bottom: 24px;
+  min-height: 10rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity .4s, transform .4s;
+}
+.word-main.changing {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.ai-display {
+  background: var(--gray-100);
+  border-radius: 12px;
+  padding: 32px 40px;
+  min-height: 100px;
+  white-space: pre-wrap;
+  line-height: 1.8;
+  font-size: 1.1rem;
+  color: var(--gray-700);
+  text-align: left;
+  margin-top: 16px;
+  transition: opacity .3s;
+}
+.ai-display.empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-400);
+  font-style: italic;
+  text-align: center;
+  min-height: 60px;
+}
+.status-bar {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8rem;
+  color: var(--gray-400);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  transition: background .3s;
+}
+.status-dot.connected { background: var(--primary); }
+.theme-btn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: 1px solid var(--gray-300);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  transition: all .2s;
+}
+.theme-btn:hover { background: var(--gray-100); }
+.mute-btn {
+  position: fixed;
+  top: 16px;
+  right: 120px;
+  background: none;
+  border: 1px solid var(--gray-300);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  transition: all .2s;
+}
+.mute-btn:hover { background: var(--gray-100); }
+.mute-btn.muted { background: #ef4444; color: white; border-color: #ef4444; }
+body.dark .mute-btn { color: #94a3b8; border-color: #334155; }
+body.dark .mute-btn:hover { background: #1e293b; }
+body.dark .mute-btn.muted { background: #ef4444; color: white; border-color: #ef4444; }
+
+/* Pronounce buttons */
+.student-controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.speak-btn {
+  background: var(--gray-100);
+  border: 1px solid var(--gray-300);
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 10px 22px;
+  font-size: 1rem;
+  color: var(--gray-700);
+  transition: all .15s;
+}
+.speak-btn:hover { background: var(--gray-300); transform: translateY(-1px); }
+.speak-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+body.dark .speak-btn { background: #1e293b; color: #e2e8f0; border-color: #334155; }
+body.dark .speak-btn:hover { background: #334155; }
+
+/* TTS player */
+.tts-player {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  justify-content: center; max-width: 640px; margin: 16px auto 0;
+  padding: 8px 12px; background: var(--gray-100); border-radius: 10px;
+}
+.tts-btn {
+  border: none; background: var(--primary); color: #fff;
+  width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 0.9rem;
+}
+.tts-seek { flex: 1; min-width: 140px; cursor: pointer; accent-color: var(--primary); }
+.tts-pct { font-size: 0.8rem; color: var(--gray-500); width: 38px; text-align: right; }
+.tts-rate-label { font-size: 0.8rem; color: var(--gray-500); }
+.tts-rates { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.tts-rate {
+  border: 1px solid var(--gray-300); background: #fff; color: var(--gray-700);
+  border-radius: 6px; padding: 3px 8px; font-size: 0.78rem; cursor: pointer;
+}
+.tts-rate.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+body.dark .tts-player { background: #1e293b; }
+body.dark .tts-rate { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+body.dark .tts-rate.active { background: var(--primary); color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span class="status-dot" id="status-dot"></span>
+  <span id="status-text">等待连接教师端...</span>
+</div>
+
+<button class="mute-btn" id="btn-mute" onclick="toggleMute()">🔊 本端静音：关</button>
+<button class="theme-btn" onclick="toggleTheme()">切换主题</button>
+
+<div class="container">
+  <div class="word-main" id="word-display">—</div>
+  <div class="student-controls">
+    <button class="speak-btn" id="btn-speak-word" disabled>🔊 单词发音</button>
+    <button class="speak-btn" id="btn-speak-sentence" disabled>🔊 朗读内容</button>
+  </div>
+  <div class="tts-player" id="tts-player">
+    <button class="tts-btn" id="tts-toggle">▶</button>
+    <input type="range" class="tts-seek" id="tts-seek" min="0" max="1000" value="0">
+    <span class="tts-pct" id="tts-pct">0%</span>
+    <span class="tts-rate-label">语速</span>
+    <span class="tts-rates" id="tts-rates"></span>
+  </div>
+  <div class="ai-display empty" id="ai-display">等待教师端操作...</div>
+</div>
+
+<script src="app.js"></script>
+<script>
+const sync = new SyncChannel('student');
+const wordEl = document.getElementById('word-display');
+const aiEl = document.getElementById('ai-display');
+const dotEl = document.getElementById('status-dot');
+const statusTextEl = document.getElementById('status-text');
+const speakWordBtn = document.getElementById('btn-speak-word');
+const speakSentenceBtn = document.getElementById('btn-speak-sentence');
+
+let connected = false;
+let wordTimeout = null;
+let currentWord = null;       // latest word for the pronounce button
+let currentSentence = null;   // latest ai-content text for the pronounce button
+
+function updateSpeakButtons() {
+  speakWordBtn.disabled = !currentWord;
+  speakSentenceBtn.disabled = !currentSentence;
+}
+
+// SyncChannel.onMessage already plays received `pronounce` broadcasts locally
+// (respecting the local mute flag), so here we only track word/ai-content for
+// the student's own buttons and update the display.
+sync.onMessage((data) => {
+  if (!connected) {
+    connected = true;
+    dotEl.classList.add('connected');
+    statusTextEl.textContent = '已连接教师端';
+  }
+
+  if (data.type === 'word-update') {
+    currentWord = data.word || null;
+    if (wordTimeout) clearTimeout(wordTimeout);
+    wordEl.classList.add('changing');
+    wordTimeout = setTimeout(() => {
+      wordEl.textContent = data.word ? data.word : '—';
+      wordEl.classList.remove('changing');
+    }, 200);
+
+    if (data.aiContent) {
+      aiEl.textContent = data.aiContent;
+      aiEl.classList.remove('empty');
+      currentSentence = data.aiContent;
+    } else {
+      aiEl.textContent = '等待教师端操作...';
+      aiEl.classList.add('empty');
+      currentSentence = null;
+    }
+    updateSpeakButtons();
+  }
+
+  if (data.type === 'ai-content') {
+    aiEl.textContent = data.aiContent;
+    aiEl.classList.remove('empty');
+    currentSentence = data.aiContent || null;
+    updateSpeakButtons();
+  }
+});
+
+// Clicking either button broadcasts `pronounce` so BOTH ends play (and this
+// end plays via the local call inside pronounce()).
+speakWordBtn.addEventListener('click', () => {
+  if (currentWord) pronounce(currentWord, 'word', sync);
+});
+speakSentenceBtn.addEventListener('click', () => {
+  if (currentSentence) pronounce(currentSentence, 'sentence', sync);
+});
+
+function toggleTheme() {
+  document.body.classList.toggle('dark');
+}
+
+function toggleMute() {
+  setMuted(!isMuted());
+  const btn = document.getElementById('btn-mute');
+  btn.classList.toggle('muted', isMuted());
+  btn.textContent = isMuted() ? '🔇 本端静音：开' : '🔊 本端静音：关';
+}
+
+// ============ TTS player (progress + rate) ============
+TTSPlayer.attach(sync);
+(function initTtsPlayer() {
+  const toggle = document.getElementById('tts-toggle');
+  const seek = document.getElementById('tts-seek');
+  const pct = document.getElementById('tts-pct');
+  const ratesEl = document.getElementById('tts-rates');
+  const RATES = [0.5, 0.75, 1, 1.25, 1.5, 2];
+  let userSeeking = false;
+  RATES.forEach(r => {
+    const b = document.createElement('button');
+    b.className = 'tts-rate'; b.textContent = r + 'x'; b.dataset.rate = r;
+    b.addEventListener('click', () => TTSPlayer.setRate(r));
+    ratesEl.appendChild(b);
+  });
+  toggle.addEventListener('click', () => TTSPlayer.togglePlay());
+  seek.addEventListener('input', () => { userSeeking = true; pct.textContent = Math.round(seek.value / 10) + '%'; });
+  const commitSeek = () => { if (!userSeeking) return; TTSPlayer.seek(seek.value / 1000); userSeeking = false; };
+  seek.addEventListener('change', commitSeek);
+  seek.addEventListener('pointerup', commitSeek);
+  seek.addEventListener('touchend', commitSeek);
+  seek.addEventListener('blur', () => { userSeeking = false; });
+  TTSPlayer.bindUI({
+    onProgress: (f) => { if (!userSeeking) { seek.value = Math.round(f * 1000); pct.textContent = Math.round(f * 100) + '%'; } },
+    onState: (s) => {
+      toggle.textContent = s.playing && !s.paused ? '⏸' : '▶';
+      ratesEl.querySelectorAll('.tts-rate').forEach(b =>
+        b.classList.toggle('active', parseFloat(b.dataset.rate) === s.rate));
+    },
+  });
+})();
+
+// Preload TTS voices (some browsers populate getVoices() asynchronously).
+if (window.speechSynthesis) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = () => { window.speechSynthesis.getVoices(); };
+}
+</script>
+</body>
+</html>

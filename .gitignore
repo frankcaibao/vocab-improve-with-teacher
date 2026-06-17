@@ -1,0 +1,17 @@
+# Secrets / private config — never commit the API key or internal gateway address
+ai_key.local
+ai_gateway.local
+.env
+
+# Runtime data (per-student progress, chat history, word library, generated audio)
+vocab-data.json
+users/
+audio/
+
+# Python
+__pycache__/
+*.pyc
+
+# Tooling / scratch
+.playwright-mcp/
+chrome-debug-profile/
